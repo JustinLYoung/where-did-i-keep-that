@@ -1,0 +1,6 @@
+Flask
+Pillow
+google-genai
+pydantic
+python-dotenv
+qrcode[pil]
