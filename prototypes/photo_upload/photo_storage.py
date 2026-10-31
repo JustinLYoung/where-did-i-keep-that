@@ -15,11 +15,10 @@ def save_photo(upload_file):
     try:
         image = Image.open(upload_file.stream)
         image = ImageOps.exif_transpose(image)
+        image = image.convert("RGB")
+        image.thumbnail(MAXSIZE)
     except Exception:
         raise ValueError("File not valid.")
-
-    image = image.convert("RGB")
-    image.thumbnail(MAXSIZE)
 
     FOLDER.mkdir(exist_ok=True)
     filename = f"{uuid.uuid4().hex}.jpg"
