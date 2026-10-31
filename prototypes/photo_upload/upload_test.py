@@ -1,10 +1,8 @@
 from flask import Flask, request, send_from_directory
-
 from photo_storage import FOLDER, save_photo
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-
 PAGE = """
 <!doctype html>
 <title>Photo Upload Test</title>
