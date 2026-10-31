@@ -5,3 +5,4 @@ __pycache__/
 results.json
 photos/
 *.db
+uploads/
