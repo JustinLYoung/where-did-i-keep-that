@@ -1,5 +1,11 @@
 import sqlite3
-from flask import Flask, request, redirect, url_for, render_template
+from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from flask import Flask, request, redirect, url_for, render_template, send_file, abort
+from prototypes.qr_code.qr_prototype import generate_qr
+
 from database.database import (
     DATABASE_PATH,
     get_all_locations,
@@ -172,6 +178,40 @@ def delete_inventory_item(item_id):
 
     return redirect(url_for("home"))
 
+@app.route("/qr/<int:location_id>")
+def download_location_qr(location_id):
+    # Check that the storage location exists
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT location_id
+        FROM storage_locations
+        WHERE location_id = ? AND user_id = ?
+    """, (location_id, 1))
+
+    location = cursor.fetchone()
+    connection.close()
+
+    if location is None:
+        abort(404)
+
+    # Build the URL that the QR code will contain
+    location_url = f"{request.url_root.rstrip('/')}/locations/{location_id}"
+
+    # Generate the QR code using our existing prototype
+    with TemporaryDirectory() as temp_folder:
+        qr_path = Path(temp_folder) / "location_qr.png"
+        generate_qr(location_url, qr_path)
+        qr_image = BytesIO(qr_path.read_bytes())
+
+    # Return the QR code as a downloadable PNG
+    return send_file(
+        qr_image,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=f"location_{location_id}_qr.png"
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
