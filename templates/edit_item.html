@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Inventory Item</title>
+</head>
+
+<body>
+
+    <h1>Edit Inventory Item</h1>
+
+    <form method="POST">
+
+        <label>Item Name:</label>
+        <input
+            type="text"
+            name="item_name"
+            value="{{ item[1] }}"
+            required
+        >
+
+        <br><br>
+
+        <label>Description:</label>
+        <input
+            type="text"
+            name="description"
+            value="{{ item[2] or '' }}"
+        >
+
+        <br><br>
+
+        <label>Storage Location:</label>
+
+        <select name="location_id">
+
+            <option value="">No location assigned</option>
+
+            {% for location in locations %}
+                <option
+                    value="{{ location[0] }}"
+                    {% if item[3] == location[0] %}selected{% endif %}
+                >
+                    {{ location[1] }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <br><br>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('home') }}">Cancel</a>
+
+</body>
+</html>

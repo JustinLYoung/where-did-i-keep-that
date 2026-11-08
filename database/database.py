@@ -1,17 +1,21 @@
 
 import sqlite3
+from pathlib import Path
+
+DATABASE_PATH = Path(__file__).parent / "where_did_i_keep_that.db"
 
 
 def get_all_items():
     """Get all items and storage locations from database"""
-    connection = sqlite3.connect("where_did_i_keep_that.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute("""
         SELECT
             items.item_name,
             items.description,
-            storage_locations.location_name
+            storage_locations.location_name,
+            items.item_id
         FROM items
         JOIN storage_locations
             ON items.location_id = storage_locations.location_id;""")
@@ -21,29 +25,81 @@ def get_all_items():
 
     return items
 
-def search_items(search_term):
-    """Search function for items in database.  Search by item"""
-    connection = sqlite3.connect("where_did_i_keep_that.db")
+
+def update_storage_location(user_id, location_id, location_name, description=None):
+    """Update name or discription of storage location"""
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT
-            items.item_name,
-            items.description,
-            storage_locations.location_name
+        UPDATE storage_locations
+        SET location_name = ?, description = ?
+        WHERE user_id = ? AND location_id = ?;
+    """, (location_name, description, user_id, location_id))
+
+    connection.commit()
+    connection.close()
+
+
+def delete_storage_location(user_id, location_id):
+    """Delete a certain storage location"""
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    # Check to see if location contains any items.
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM items
+        WHERE user_id = ? AND location_id = ?;
+    """, (user_id, location_id))
+
+    item_count = cursor.fetchone()[0]
+
+    # if items exists dont delete location
+    if item_count > 0:
+        connection.close()
+        return False
+
+    # delete location
+    cursor.execute("""
+        DELETE FROM storage_locations
+        WHERE user_id = ? AND location_id = ?;
+    """, (user_id, location_id))
+
+    connection.commit()
+
+    deleted = cursor.rowcount > 0
+
+    connection.close()
+
+    return deleted
+
+
+def search_items(search_term):
+    """Search for a item"""
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT items.item_name,
+               items.description,
+               storage_locations.location_name,
+               items.item_id
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id
-        WHERE items.item_name LIKE ?;""", (f"%{search_term}%",))
+        WHERE items.item_name LIKE ?;
+    """, ('%' + search_term + '%',))
 
-    items = cursor.fetchall()
+    results = cursor.fetchall()
     connection.close()
 
-    return items
+    return results
+
 
 def add_item(user_id, item_name, description, location_id=None):
     """Add items to the database."""
-    connection = sqlite3.connect("where_did_i_keep_that.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -59,9 +115,25 @@ def add_item(user_id, item_name, description, location_id=None):
     connection.commit()
     connection.close()
 
+
+def update_item(user_id, item_id, item_name, description, location_id=None):
+    """Update Item Name, Discription, and Location"""
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE items
+        SET item_name = ?, description = ?, location_id = ?
+        WHERE user_id = ? AND item_id = ?;
+    """, (item_name, description, location_id, user_id, item_id))
+
+    connection.commit()
+    connection.close()
+
+
 def add_storage_location(user_id, location_name, description=None):
     """Add a storage location to the database"""
-    connection = sqlite3.connect("where_did_i_keep_that.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -72,13 +144,14 @@ def add_storage_location(user_id, location_name, description=None):
     connection.commit()
     connection.close()
 
+
 def get_all_locations():
     """Retrieve all locations in the database"""
-    connection = sqlite3.connect("where_did_i_keep_that.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT location_id, location_name
+        SELECT location_id, location_name, description
         FROM storage_locations;
     """)
 
@@ -88,69 +161,20 @@ def get_all_locations():
     return locations
 
 
-def main():
-    """Test functions of the app through user's selections"""
-    while True:
-        print("\n=== Where Did I Keep That? ===")
-        print("1. View all items")
-        print("2. Search items")
-        print("3. Add an item")
-        print("4. Add a storage location")
-        print("5. Quit")
+def delete_item(user_id, item_id):
+    """Delete an item from a storage location"""
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
 
-        choice = input("Choose an option: ")
+    cursor.execute("""
+        DELETE FROM items
+        WHERE user_id = ? AND item_id = ?;
+    """, (user_id, item_id))
 
-        if choice == "1":
-            items = get_all_items()
+    connection.commit()
 
-            for item in items:
-                print(
-                    f"{item[0]} | {item[1]} | Stored in: {item[2]}"
-                )
+    deleted = cursor.rowcount > 0
 
-        elif choice == "2":
-            search_term = input("Enter item name or tag: ")
-            items = search_items(search_term)
+    connection.close()
 
-            if items:
-                for item in items:
-                    print(
-                        f"{item[0]} | {item[1]} | Stored in: {item[2]}"
-                    )
-            else:
-                print("No matching items found.")
-
-        elif choice == "3":
-            item_name = input("Enter item name: ")
-            description = input("Enter description: ")
-
-            locations = get_all_locations()
-
-            print("\nAvailable storage locations:")
-
-            for location in locations:
-                print(f"{location[0]}. {location[1]}")
-
-            location_id = int(input("Choose a location ID: "))
-
-            add_item(1, item_name, description, location_id)
-
-            print("Item added successfully!")
-
-        elif choice == "4":
-            location_name = input("Enter the storage location name: ")
-            description = input("Enter a description (optional): ")
-
-            add_storage_location(1, location_name, description)
-
-            print("Storage location added successfully!")
-
-        elif choice == "5":
-            print("Thank you, goodbye!")
-            break
-
-        else:
-            print("Invalid choice. Please choose 1-5.")
-
-if __name__ == "__main__":
-    main()
+    return deleted
