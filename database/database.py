@@ -96,9 +96,8 @@ def search_items(search_term):
 
     return results
 
-
-def add_item(user_id, item_name, description, location_id=None):
-    """Add items to the database."""
+def add_item(user_id, item_name, description, location_id=None, photo_path=None):
+    """Add an item to the database."""
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
@@ -107,10 +106,11 @@ def add_item(user_id, item_name, description, location_id=None):
             user_id,
             location_id,
             item_name,
-            description
+            description,
+            photo_path
         )
-        VALUES (?, ?, ?, ?);
-    """, (user_id, location_id, item_name, description))
+        VALUES (?, ?, ?, ?, ?);
+    """, (user_id, location_id, item_name, description, photo_path))
 
     connection.commit()
     connection.close()
