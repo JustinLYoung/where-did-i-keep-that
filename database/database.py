@@ -112,9 +112,40 @@ def add_item(user_id, item_name, description, location_id=None, photo_path=None)
         VALUES (?, ?, ?, ?, ?);
     """, (user_id, location_id, item_name, description, photo_path))
 
+    item_id = cursor.lastrowid
+
     connection.commit()
     connection.close()
 
+    return item_id
+
+
+def add_tags(item_id, tags):
+    """Add tags to an item"""
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    for tag in tags:
+        cursor.execute("""
+            INSERT OR IGNORE INTO tags (tag_name)
+            VALUES (?);
+        """, (tag,))
+
+        cursor.execute("""
+            SELECT tag_id
+            FROM tags
+            WHERE tag_name = ?;
+        """, (tag,))
+
+        tag_id = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT OR IGNORE INTO item_tags (item_id, tag_id)
+            VALUES (?, ?);
+        """, (item_id, tag_id))
+
+    connection.commit()
+    connection.close()
 
 def update_item(user_id, item_id, item_name, description, location_id=None):
     """Update Item Name, Discription, and Location"""
