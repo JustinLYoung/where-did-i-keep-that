@@ -10,7 +10,7 @@ sys.path.append(str(prototypes.parent))
 
 from photo_storage import FOLDER, get_path, save_photo
 from tag_test import get_photo_details
-from database.database import add_item, get_all_locations
+from database.database import add_item, add_tags, get_all_locations
 
 USER_ID = 1 # hardcoded for now until login page is done
 
@@ -116,13 +116,20 @@ def save_item():
         )
     description = request.form.get("description", "")
 
-    add_item(
+    tags = []
+    for tag in request.form.get("tags", "").split(","):
+        tag = tag.strip().lower()
+        if tag:
+            tags.append(tag)
+
+    item_id = add_item(
         USER_ID,
         name,
         description,
         int(location_id),
         photo_path=filename
     )
+    add_tags(item_id, tags)
 
     return PAGE.format(result=f"<p>Saved {escape(name)}!</p>")
 
