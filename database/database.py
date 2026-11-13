@@ -108,6 +108,8 @@ def add_item(user_id, item_name, description, location_id=None, photo_path=None)
             item_name,
             description,
             photo_path
+            description,
+            photo_path
         )
         VALUES (?, ?, ?, ?, ?);
     """, (user_id, location_id, item_name, description, photo_path))
