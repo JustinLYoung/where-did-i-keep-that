@@ -34,9 +34,16 @@ def home():
     locations = get_all_locations()
 
     search_term = request.args.get("search", "").strip()
+    location_filter = request.args.get("location_id", "")
 
-    if search_term:
-        items = search_items(search_term)
+    # Empty means "All locations"
+    if location_filter.isdigit():
+        location_filter = int(location_filter)
+    else:
+        location_filter = None
+
+    if search_term or location_filter:
+        items = search_items(search_term, location_filter)
     else:
         items = get_all_items()
 
@@ -44,7 +51,8 @@ def home():
         "index.html",
         locations=locations,
         items=items,
-        search_term=search_term
+        search_term=search_term,
+        location_filter=location_filter
     )
 
 @app.route("/edit/<int:location_id>", methods=["GET", "POST"])

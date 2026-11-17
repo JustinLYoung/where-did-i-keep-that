@@ -64,12 +64,24 @@
                     <input
                         type="text"
                         name="search"
-                        placeholder="Search items by name..."
+                        placeholder="Search by name, description or tag..."
                         value="{{ search_term }}"
                     >
+
+                    <select name="location_id">
+                        <option value="">All locations</option>
+
+                        {% for location in locations %}
+                            <option value="{{ location[0] }}"
+                                {% if location[0] == location_filter %}selected{% endif %}>
+                                {{ location[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
                     <button type="submit">Search</button>
 
-                    {% if search_term %}
+                    {% if search_term or location_filter %}
                         <a href="{{ url_for('home') }}">Clear Search</a>
                     {% endif %}
                 </form>
@@ -127,7 +139,7 @@
                             {% endif %}
 
                             <br>
-                            <small>Stored in: {{ item[2] }}</small>
+                            <small>Stored in: {{ item[2] or "No location" }}</small>
                         </li>
                     {% endfor %}
                 </ul>
