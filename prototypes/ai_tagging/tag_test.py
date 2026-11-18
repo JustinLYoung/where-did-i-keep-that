@@ -15,12 +15,17 @@ PROMPT = """
 Look at the main object in the photo and identify what it is.
 
 Return:
-- name: a short name for the object
-- description: one sentence describing the object
-- tags: 5 to 8 lowercase keywords related to the object
+- name: a short name for the object, including the brand and model if printed on it
+- description: one sentence describing only the object itself
+- tags: 3 to 5 lowercase keywords someone might search to find this object, including other common names for it
 
-Only use details that are clearly visible.
-Do not describe the background or surroundings.
+Rules:
+- Only use details that are clearly visible.
+- Only include a brand or model if you can read it printed on the object. Add the brand as a tag too.
+- Do not guess the brand from the object's shape or design.
+- Do not mention the background, the surface it is on, or hands holding it.
+- Use specific tags like the object type, color, and material.
+- Avoid general words like tool, device, electronics, equipment, accessory, gadget or hardware.
 """
 
 load_dotenv()
