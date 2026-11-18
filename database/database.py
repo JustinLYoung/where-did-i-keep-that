@@ -15,7 +15,8 @@ def get_all_items():
             items.item_name,
             items.description,
             storage_locations.location_name,
-            items.item_id
+            items.item_id,
+            items.photo_path
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id;""")
@@ -86,7 +87,8 @@ def search_items(search_term, location_id=None):
         SELECT DISTINCT items.item_name,
                items.description,
                storage_locations.location_name,
-               items.item_id
+               items.item_id,
+               items.photo_path
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id
@@ -104,6 +106,7 @@ def search_items(search_term, location_id=None):
     connection.close()
 
     return results
+
 
 def add_item(user_id, item_name, description, location_id=None, photo_path=None):
     """Add an item to the database."""
@@ -155,6 +158,7 @@ def add_tags(item_id, tags):
 
     connection.commit()
     connection.close()
+
 
 def update_item(user_id, item_id, item_name, description, location_id=None):
     """Update Item Name, Discription, and Location"""
