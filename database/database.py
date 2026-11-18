@@ -17,7 +17,7 @@ def get_all_items():
             storage_locations.location_name,
             items.item_id
         FROM items
-        JOIN storage_locations
+        LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id;""")
 
     items = cursor.fetchall()
@@ -75,21 +75,30 @@ def delete_storage_location(user_id, location_id):
     return deleted
 
 
-def search_items(search_term):
-    """Search for a item"""
+def search_items(search_term, location_id=None):
+    """Search items by name, description or tag, and filter by location"""
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
+    search = '%' + search_term + '%'
+
     cursor.execute("""
-        SELECT items.item_name,
+        SELECT DISTINCT items.item_name,
                items.description,
                storage_locations.location_name,
                items.item_id
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id
-        WHERE items.item_name LIKE ?;
-    """, ('%' + search_term + '%',))
+        LEFT JOIN item_tags
+            ON items.item_id = item_tags.item_id
+        LEFT JOIN tags
+            ON item_tags.tag_id = tags.tag_id
+        WHERE (items.item_name LIKE ?
+            OR items.description LIKE ?
+            OR tags.tag_name LIKE ?)
+        AND (? IS NULL OR items.location_id = ?);
+    """, (search, search, search, location_id, location_id))
 
     results = cursor.fetchall()
     connection.close()
