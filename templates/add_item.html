@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Item</title>
+</head>
+<body>
+    <h1>Add a New Item</h1>
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+    {% if not filename %}
+        <form method="POST" action="{{ url_for('add_item_page') }}"
+              enctype="multipart/form-data">
+
+            <label for="photo">Choose a photo:</label>
+            <input type="file" name="photo" id="photo"
+                   accept="image/*" required>
+
+            <button type="submit">Upload Photo</button>
+        </form>
+    {% else %}
+        <h2>Review Item Details</h2>
+
+        <img src="{{ url_for('uploaded_photo', filename=filename) }}"
+             alt="Uploaded item" width="300">
+
+        <form method="POST" action="{{ url_for('save_item') }}">
+
+            <input type="hidden" name="filename" value="{{ filename }}">
+
+            <p>
+                <label for="name">Item Name:</label><br>
+                <input type="text" name="name" id="name"
+                       value="{{ name }}" required>
+            </p>
+
+            <p>
+                <label for="description">Description:</label><br>
+                <textarea name="description"
+                          id="description">{{ description }}</textarea>
+            </p>
+
+            <p>
+                <label for="tags">Tags (comma separated):</label><br>
+                <input type="text" name="tags" id="tags"
+                       value="{{ tags }}">
+            </p>
+
+            <p>
+                <label for="location_id">Storage Location:</label><br>
+                <select name="location_id" id="location_id" required>
+                    {% for location in locations %}
+                        <option value="{{ location[0] }}">
+                            {{ location[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <button type="submit">Save Item</button>
+        </form>
+    {% endif %}
+
+    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+</body>
+</html>
