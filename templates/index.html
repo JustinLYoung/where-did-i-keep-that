@@ -9,20 +9,15 @@
 
     <header>
         <h1>Where Did I Keep That?</h1>
+
+        <a href="{{ url_for('logout') }}" class="logout">Log Out</a>
     </header>
 
     <main>
 
-        <section class="upload-section">
-            <h2>Upload New Photo</h2>
-
-        <a href="{{ url_for('add_item_page') }}">
-        <button type="button">Upload New Photo</button>
-            </a>
-        </section>
-
         <section>
             <h2>Add a Storage Location</h2>
+            <p class="help-text">Create a storage location before adding items.</p>
 
             <form method="POST">
                 <label>Location Name</label>
@@ -33,6 +28,15 @@
                 <br>
                 <button type="submit">Add Location</button>
             </form>
+
+        </section>
+
+                <section class="upload-section">
+            <h2>Upload New Photo</h2>
+
+        <a href="{{ url_for('add_item_page') }}">
+        <button type="button">Upload New Photo</button>
+            </a>
         </section>
 
         <section>
