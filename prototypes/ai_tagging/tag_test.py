@@ -29,7 +29,12 @@ Rules:
 """
 
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+# only create the client if there is a key so the app can still start without one
+client = None
+if API_KEY:
+    client = genai.Client(api_key=API_KEY)
  
  
 class PhotoDetails(BaseModel):
@@ -39,6 +44,9 @@ class PhotoDetails(BaseModel):
 
 
 def get_photo_details(photo_file):
+    if client is None:
+        raise RuntimeError("GEMINI_API_KEY is missing from the .env file.")
+
     picture = Image.open(photo_file)
     picture.thumbnail((1024, 1024))
 
@@ -51,7 +59,23 @@ def get_photo_details(photo_file):
         )
     )
 
+    if not answer.text:
+        raise RuntimeError("Gemini returned an empty response.")
+
     return PhotoDetails.model_validate_json(answer.text)
+
+
+def error_message(error):
+    """Turn an AI error into a short message for the user"""
+    text = str(error)
+    if "GEMINI_API_KEY" in text:
+        return "AI tagging is not set up (missing API key)."
+    if "429" in text:
+        return "The daily AI limit has been reached."
+    if "503" in text:
+        return "The AI service is busy right now."
+    return "AI tagging failed."
+
 
 def main():
     folder = Path(sys.argv[1] if len(sys.argv) > 1 else "photos")

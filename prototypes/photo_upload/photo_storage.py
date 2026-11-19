@@ -10,7 +10,7 @@ MAXSIZE = (1024, 1024)
 def save_photo(upload_file):
     ext = Path(upload_file.filename).suffix.lower()
     if ext not in EXTENSIONS:
-        raise ValueError("File type not accepted.")
+        raise ValueError("Please upload a .jpg, .jpeg or .png photo.")
 
     try:
         image = Image.open(upload_file.stream)
@@ -18,7 +18,7 @@ def save_photo(upload_file):
         image = image.convert("RGB")
         image.thumbnail(MAXSIZE)
     except Exception:
-        raise ValueError("File not valid.")
+        raise ValueError("That file couldn't be opened as an image.")
 
     FOLDER.mkdir(exist_ok=True)
     filename = f"{uuid.uuid4().hex}.jpg"
