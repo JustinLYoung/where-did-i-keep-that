@@ -277,6 +277,11 @@ def delete_inventory_item(item_id):
 
 @app.route("/qr/<int:location_id>")
 def download_location_qr(location_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+
     # Check that the storage location exists
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
@@ -285,7 +290,7 @@ def download_location_qr(location_id):
         SELECT location_id
         FROM storage_locations
         WHERE location_id = ? AND user_id = ?
-    """, (location_id, 1))
+    """, (location_id, user_id))
 
     location = cursor.fetchone()
     connection.close()
