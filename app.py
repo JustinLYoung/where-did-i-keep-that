@@ -2,6 +2,8 @@ import sqlite3
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import os
+from dotenv import load_dotenv
 
 from flask import (
     Flask, request, redirect, url_for, render_template,
@@ -26,12 +28,16 @@ from database.database import (
 )
 
 from prototypes.photo_upload.photo_storage import FOLDER, get_path, save_photo
-from prototypes.ai_tagging.tag_test import get_photo_details
-from prototypes.qr_code.qr_prototype import generate_qr
+from prototypes.ai_tagging.tag_test import error_message, get_photo_details
 
 app = Flask(__name__)
 
-app.secret_key = "f840d4ce7a36736b0e03fa80769272e3bbbcafaa741d14bbf423fe3afdd109d4"
+load_dotenv()
+
+app.secret_key = os.getenv("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is not configured")
 
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
@@ -346,7 +352,7 @@ def add_item_page():
 
     except Exception as error:
         print(f"AI tagging failed: {error}")
-        message = "AI tagging failed. Please enter the details manually."
+        message = error_message(error) + " Please enter the details manually."
 
     locations = get_all_locations(user_id)
 
@@ -378,7 +384,10 @@ def save_item():
     )
 
     if not name or not location_id.isdigit() or not valid_photo:
-        return "Missing or invalid item details. Please try again.", 400
+        return render_template(
+            "add_item.html",
+            message="Missing or invalid item details. Please try again."
+        ), 400
 
     description = request.form.get("description", "")
 
@@ -403,6 +412,21 @@ def save_item():
 @app.route("/uploads/<filename>")
 def uploaded_photo(filename):
     return send_from_directory(FOLDER, filename)
+
+
+@app.errorhandler(413)
+def file_too_large(error):
+    return render_template(
+        "add_item.html",
+        message="That photo is too large. Please upload a photo under 16 MB."
+    ), 413
+
+
+@app.errorhandler(sqlite3.OperationalError)
+def database_error(error):
+    print(f"Database error: {error}")
+    return "The database isn't set up yet. See database/README.md.", 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
