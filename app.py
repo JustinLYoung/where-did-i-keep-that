@@ -2,9 +2,14 @@ import sqlite3
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import os
+from dotenv import load_dotenv
 
-from flask import Flask, request, redirect, url_for, render_template, send_file, send_from_directory, abort
+from flask import (
+    Flask, request, redirect, url_for, render_template,
+    send_file, send_from_directory, abort, session, flash)
 from prototypes.qr_code.qr_prototype import generate_qr
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from database.database import (
     DATABASE_PATH,
@@ -17,7 +22,9 @@ from database.database import (
     add_tags,
     update_item,
     delete_item,
-    search_items
+    search_items,
+    add_user,
+    get_user_by_login
 )
 
 from prototypes.photo_upload.photo_storage import FOLDER, get_path, save_photo
@@ -25,21 +32,35 @@ from prototypes.ai_tagging.tag_test import error_message, get_photo_details
 
 app = Flask(__name__)
 
+load_dotenv()
+
+app.secret_key = os.getenv("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is not configured")
+
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
-USER_ID = 1  # Temp until login is implemented
+
+def get_current_user_id():
+    return session.get("user_id")
 
 @app.route("/", methods=["GET", "POST"])
 def home():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+
     if request.method == "POST":
         location_name = request.form["location_name"]
         description = request.form["description"]
 
-        add_storage_location(1, location_name, description)
+        add_storage_location(user_id, location_name, description)
 
         return redirect(url_for("home"))
 
-    locations = get_all_locations()
+    locations = get_all_locations(user_id)
 
     search_term = request.args.get("search", "").strip()
     location_filter = request.args.get("location_id", "")
@@ -51,9 +72,9 @@ def home():
         location_filter = None
 
     if search_term or location_filter:
-        items = search_items(search_term, location_filter)
+        items = search_items(search_term, location_filter, user_id)
     else:
-        items = get_all_items()
+        items = get_all_items(user_id)
 
     return render_template(
         "index.html",
@@ -63,10 +84,58 @@ def home():
         location_filter=location_filter
     )
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        email = request.form["email"].strip()
+        password = request.form["password"]
+
+        password_hash = generate_password_hash(password)
+
+        user_id = add_user(username, email, password_hash)
+
+        if user_id is None:
+            flash("Username or email already exists.")
+            return redirect(url_for("register"))
+
+        flash("Account created successfully. You can now log in.")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        login = request.form["login"].strip()
+        password = request.form["password"]
+
+        user = get_user_by_login(login)
+
+        if user is None or not check_password_hash(user[3], password):
+            flash("Invalid username/email or password.")
+            return redirect(url_for("login"))
+
+        session["user_id"] = user[0]
+        session["username"] = user[1]
+
+        return redirect(url_for("home"))
+
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been logged out.")
+    return redirect(url_for("login"))
+
 @app.route("/edit/<int:location_id>", methods=["GET", "POST"])
 def edit_location(location_id):
 
-    user_id = 1  # Temp until login is implemented
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
 
     if request.method == "POST":
 
@@ -82,7 +151,7 @@ def edit_location(location_id):
 
         return redirect(url_for("home"))
 
-    locations = get_all_locations()
+    locations = get_all_locations(user_id)
 
     # Find the location we want to edit
     location = next(
@@ -99,7 +168,10 @@ def edit_location(location_id):
 @app.route("/delete/<int:location_id>", methods=["POST"])
 def delete_location(location_id):
 
-    user_id = 1  # Temp until login is implemented
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
 
     deleted = delete_storage_location(user_id, location_id)
 
@@ -112,7 +184,10 @@ def delete_location(location_id):
 @app.route("/add-item", methods=["POST"])
 def add_new_item():
 
-    user_id = 1  # Temp until login is implemented
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
 
     item_name = request.form["item_name"]
     description = request.form["description"]
@@ -134,7 +209,10 @@ def add_new_item():
 @app.route("/edit-item/<int:item_id>", methods=["GET", "POST"])
 def edit_item(item_id):
 
-    user_id = 1  # Temporary until login is implemented
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
 
     if request.method == "POST":
 
@@ -173,7 +251,7 @@ def edit_item(item_id):
     if item is None:
         return "Item not found", 404
 
-    locations = get_all_locations()
+    locations = get_all_locations(user_id)
 
     return render_template(
         "edit_item.html",
@@ -185,7 +263,10 @@ def edit_item(item_id):
 @app.route("/delete-item/<int:item_id>", methods=["POST"])
 def delete_inventory_item(item_id):
 
-    user_id = 1  # Temporary until login is implemented
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
 
     deleted = delete_item(user_id, item_id)
 
@@ -196,6 +277,11 @@ def delete_inventory_item(item_id):
 
 @app.route("/qr/<int:location_id>")
 def download_location_qr(location_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+
     # Check that the storage location exists
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
@@ -204,7 +290,7 @@ def download_location_qr(location_id):
         SELECT location_id
         FROM storage_locations
         WHERE location_id = ? AND user_id = ?
-    """, (location_id, 1))
+    """, (location_id, user_id))
 
     location = cursor.fetchone()
     connection.close()
@@ -231,6 +317,12 @@ def download_location_qr(location_id):
 
 @app.route("/items/new", methods=["GET", "POST"])
 def add_item_page():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+
     if request.method == "GET":
         return render_template("add_item.html")
 
@@ -267,9 +359,7 @@ def add_item_page():
         print(f"AI tagging failed: {error}")
         message = error_message(error) + " Please enter the details manually."
 
-    locations = get_all_locations()
-    if not locations:
-        message += " Please add a storage location first."
+    locations = get_all_locations(user_id)
 
     return render_template(
         "add_item.html",
@@ -283,6 +373,11 @@ def add_item_page():
 
 @app.route("/items/save", methods=["POST"])
 def save_item():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+
     filename = request.form.get("filename", "")
     name = request.form.get("name", "").strip()
     location_id = request.form.get("location_id", "")
@@ -308,7 +403,7 @@ def save_item():
             tags.append(tag)
 
     item_id = add_item(
-        USER_ID,
+        user_id,
         name,
         description,
         int(location_id),
@@ -336,6 +431,7 @@ def file_too_large(error):
 def database_error(error):
     print(f"Database error: {error}")
     return "The database isn't set up yet. See database/README.md.", 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -44,11 +44,12 @@ section h2,
 section h3 {
     color: #263b50;
     margin-top: 0;
+    /* text-align: center; */
 }
 
 /* Upload photo section */
 .upload-section {
-    text-align: center;
+    /* text-align: center; */
 }
 
 .upload-section button {
@@ -147,4 +148,21 @@ img {
     border-radius: 5px;
 }
 
+header {
+    position: relative;
+}
 
+.logout {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: white;
+    text-decoration: none;
+    background-color: #527fa3;
+    padding: 8px 14px;
+    border-radius: 5px;
+}
+
+.logout:hover {
+    background-color: #3d6687;
+}
