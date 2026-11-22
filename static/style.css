@@ -1,0 +1,168 @@
+/* USED CHAT GPT TO GIVE APP BASIC CSS */
+
+
+/* General page styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    color: #333;
+}
+
+/* Header */
+header {
+    background-color: #263b50;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+header h1 {
+    color: white;
+    margin: 0;
+}
+
+/* Main content */
+main {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Sections */
+section {
+    background-color: white;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Section headings */
+section h2,
+section h3 {
+    color: #263b50;
+    margin-top: 0;
+    /* text-align: center; */
+}
+
+/* Upload photo section */
+.upload-section {
+    /* text-align: center; */
+}
+
+.upload-section button {
+    width: 160px;
+    height: 34px;
+    padding: 0 12px;
+    white-space: nowrap;
+    box-sizing: border-box;
+
+}
+
+.upload-section form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upload-section input {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Form fields */
+input,
+textarea,
+select {
+    width: 350px;
+    max-width: 100%;
+    padding: 9px;
+    margin: 8px 0 15px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+/* All buttons */
+button,
+a[href*="edit"],
+a[href*="delete"],
+a[href*="qr"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 34px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    background-color: #8bb9dc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    text-align: center;
+    text-decoration: none;
+    margin: 4px;
+}
+
+/* Button hover */
+button:hover,
+a[href*="edit"]:hover,
+a[href*="delete"]:hover,
+a[href*="qr"]:hover {
+    background-color: #679dc7;
+    color: white;
+    text-decoration: none;
+}
+
+/* Regular links */
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Lists */
+ul {
+    padding-left: 20px;
+}
+
+li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+header {
+    position: relative;
+}
+
+.logout {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: white;
+    text-decoration: none;
+    background-color: #527fa3;
+    padding: 8px 14px;
+    border-radius: 5px;
+}
+
+.logout:hover {
+    background-color: #3d6687;
+}
