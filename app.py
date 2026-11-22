@@ -91,7 +91,7 @@ def register():
         email = request.form["email"].strip()
         password = request.form["password"]
 
-        password_hash = generate_password_hash(password)
+        password_hash = generate_password_hash(password, method="pbkdf2:sha256")
 
         user_id = add_user(username, email, password_hash)
 
@@ -114,10 +114,16 @@ def login():
 
         if user is None or not check_password_hash(user[3], password):
             flash("Invalid username/email or password.")
-            return redirect(url_for("login"))
+            return redirect(url_for("login", next=request.args.get("next")))
 
         session["user_id"] = user[0]
         session["username"] = user[1]
+
+        # Return to the scanned storage location after login
+        next_page = request.args.get("next", "")
+
+        if next_page.startswith("/locations/") and next_page[len("/locations/"):].isdigit():
+            return redirect(next_page)
 
         return redirect(url_for("home"))
 
@@ -313,6 +319,46 @@ def download_location_qr(location_id):
         mimetype="image/png",
         as_attachment=True,
         download_name=f"location_{location_id}_qr.png"
+    )
+
+@app.route("/locations/<int:location_id>")
+def view_storage_location(location_id):
+    if "user_id" not in session:
+        return redirect(url_for("login", next=request.path))
+
+    user_id = get_current_user_id()
+
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    # Find the location and verify ownership
+    cursor.execute("""
+        SELECT location_id, location_name, description
+        FROM storage_locations
+        WHERE location_id = ? AND user_id = ?
+    """, (location_id, user_id))
+
+    location = cursor.fetchone()
+
+    if location is None:
+        connection.close()
+        abort(404)
+
+    # Get the inventory stored at this location
+    cursor.execute("""
+        SELECT item_id, item_name, description, photo_path
+        FROM items
+        WHERE location_id = ? AND user_id = ?
+        ORDER BY item_name
+    """, (location_id, user_id))
+
+    items = cursor.fetchall()
+    connection.close()
+
+    return render_template(
+        "location_detail.html",
+        location=location,
+        items=items
     )
 
 @app.route("/items/new", methods=["GET", "POST"])
