@@ -24,7 +24,8 @@ from database.database import (
     delete_item,
     search_items,
     add_user,
-    get_user_by_login
+    get_user_by_login,
+    update_item_status
 )
 
 from prototypes.photo_upload.photo_storage import FOLDER, get_path, save_photo
@@ -280,6 +281,23 @@ def delete_inventory_item(item_id):
         return "Item not found or could not be deleted.", 404
 
     return redirect(url_for("home"))
+
+
+@app.route("/item-status/<int:item_id>", methods=["POST"])
+def change_item_status(item_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = get_current_user_id()
+    status = request.form.get("status")
+
+    updated = update_item_status(user_id, item_id, status)
+
+    if not updated:
+        abort(404)
+
+    return redirect(url_for("home"))
+
 
 @app.route("/qr/<int:location_id>")
 def download_location_qr(location_id):

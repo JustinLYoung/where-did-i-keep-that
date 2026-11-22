@@ -20,8 +20,10 @@ CREATE TABLE "items" (
 	"user_id"	INTEGER NOT NULL,
 	"location_id"	INTEGER,
 	"item_name"	TEXT NOT NULL,
-	"description"	TEXT,
-	"photo_path"	TEXT,
+	"description" TEXT,
+	"photo_path" TEXT,
+	"status" TEXT NOT NULL DEFAULT 'stored'
+		CHECK ("status" IN ('stored', 'removed')),
 	PRIMARY KEY("item_id" AUTOINCREMENT),
 	FOREIGN KEY("location_id") REFERENCES "storage_locations"("location_id"),
 	FOREIGN KEY("user_id") REFERENCES "users"("user_id")
