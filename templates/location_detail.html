@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ location[1] }} - Where Did I Keep That?</title>
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
@@ -19,10 +20,10 @@
                 <p>{{ location[2] }}</p>
             {% endif %}
 
-            <h2>Items Stored Here</h2>
+            <h2>Items Stored Here ({{ items|length }})</h2>
 
             {% if items %}
-                <ul>
+                <ul class="location-items">
                     {% for item in items %}
                         <li>
                             <strong>{{ item[1] }}</strong>
@@ -30,6 +31,10 @@
                             {% if item[2] %}
                                 <p>{{ item[2] }}</p>
                             {% endif %}
+
+                            <a href="{{ url_for('edit_item', item_id=item[0]) }}">
+                                Edit Item
+                            </a>
 
                             {% if item[3] %}
                                 <img

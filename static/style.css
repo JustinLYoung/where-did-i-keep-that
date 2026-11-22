@@ -166,3 +166,33 @@ header {
 .logout:hover {
     background-color: #3d6687;
 }
+
+/* Storage location inventory */
+.location-items {
+    list-style: none;
+    padding-left: 0;
+}
+
+.location-items li {
+    background-color: #f4f6f8;
+    border: 1px solid #e0e5ea;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.location-items li strong {
+    display: block;
+    font-size: 18px;
+}
+
+@media (max-width: 600px) {
+    main {
+        padding: 0 12px;
+        margin: 16px auto;
+    }
+
+    section {
+        padding: 16px;
+    }
+}
