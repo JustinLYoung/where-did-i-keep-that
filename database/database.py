@@ -16,7 +16,8 @@ def get_all_items(user_id):
             items.description,
             storage_locations.location_name,
             items.item_id,
-            items.photo_path
+            items.photo_path,
+            items.status
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id
@@ -89,8 +90,9 @@ def search_items(search_term, location_id=None, user_id=None):
         SELECT DISTINCT items.item_name,
                items.description,
                storage_locations.location_name,
-               items.item_id,
-               items.photo_path
+                items.item_id,
+                items.photo_path,
+                items.status
         FROM items
         LEFT JOIN storage_locations
             ON items.location_id = storage_locations.location_id
@@ -278,3 +280,25 @@ def get_user_by_login(login):
     connection.close()
 
     return user
+
+
+def update_item_status(user_id, item_id, status):
+    """Update an item's storage status."""
+    if status not in ("stored", "removed"):
+        return False
+
+    connection = sqlite3.connect(DATABASE_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE items
+        SET status = ?
+        WHERE user_id = ? AND item_id = ?;
+    """, (status, user_id, item_id))
+
+    updated = cursor.rowcount > 0
+
+    connection.commit()
+    connection.close()
+
+    return updated

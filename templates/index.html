@@ -162,15 +162,27 @@
                                     >
                                     <br>
                                 {% endif %}
-                                
                             <strong>{{ item[0] }}</strong>
 
                             {% if item[1] %}
-                                - {{ item[1] }}
+                                <p>{{ item[1] }}</p>
                             {% endif %}
 
-                            <br>
-                            <small>Stored in: {{ item[2] or "No location" }}</small>
+                            <small>Location: {{ item[2] or "No location" }}</small>
+
+                            <div class="item-status-row">
+                                <span>Status: {{ item[5] | capitalize }}</span>
+
+                                <form method="POST"
+                                    action="{{ url_for('change_item_status', item_id=item[3]) }}">
+                                    <input type="hidden" name="status"
+                                        value="{{ 'removed' if item[5] == 'stored' else 'stored' }}">
+
+                                    <button type="submit">
+                                        {{ 'Mark as Removed' if item[5] == 'stored' else 'Mark as Returned' }}
+                                    </button>
+                                </form>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
