@@ -239,6 +239,8 @@ def edit_item(item_id):
         if not updated:
             flash("Unable to update item. Please check the storage location.", "error")
             return redirect(url_for("home"))
+        
+        return redirect(url_for("home"))
 
     # Find the item being edited
     connection = sqlite3.connect(DATABASE_PATH)
