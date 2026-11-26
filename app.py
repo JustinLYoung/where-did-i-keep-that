@@ -214,6 +214,8 @@ def add_new_item():
         flash("Invalid storage location.", "error")
         return redirect(url_for("home"))
 
+    return redirect(url_for("home"))
+
 
 @app.route("/edit-item/<int:item_id>", methods=["GET", "POST"])
 def edit_item(item_id):
