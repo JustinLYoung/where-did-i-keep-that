@@ -118,6 +118,20 @@ def add_item(user_id, item_name, description, location_id=None, photo_path=None)
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
+    # Verify selected location belongs to user
+    if location_id is not None:
+        cursor.execute("""
+            SELECT location_id
+            FROM storage_locations
+            WHERE location_id = ? AND user_id = ?;
+        """, (location_id, user_id))
+
+        location = cursor.fetchone()
+
+        if location is None:
+            connection.close()
+            return None
+
     cursor.execute("""
         INSERT INTO items (
             user_id,
@@ -166,18 +180,38 @@ def add_tags(item_id, tags):
 
 
 def update_item(user_id, item_id, item_name, description, location_id=None):
-    """Update Item Name, Discription, and Location"""
+    """Update an item if it belongs to the logged-in user."""
+
     connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
+    # Verify selected location belongs to user
+    if location_id is not None:
+        cursor.execute("""
+            SELECT location_id
+            FROM storage_locations
+            WHERE location_id = ? AND user_id = ?;
+        """, (location_id, user_id))
+
+        location = cursor.fetchone()
+
+        if location is None:
+            connection.close()
+            return False
+
+    # Update the item if it belongs to correct user
     cursor.execute("""
         UPDATE items
         SET item_name = ?, description = ?, location_id = ?
         WHERE user_id = ? AND item_id = ?;
     """, (item_name, description, location_id, user_id, item_id))
 
+    updated = cursor.rowcount > 0
+
     connection.commit()
     connection.close()
+
+    return updated
 
 
 def add_storage_location(user_id, location_name, description=None):

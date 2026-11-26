@@ -208,7 +208,11 @@ def add_new_item():
     else:
         location_id = None
 
-    add_item(user_id, item_name, description, location_id)
+    item_id = add_item(user_id, item_name, description, location_id)
+
+    if item_id is None:
+        flash("Invalid storage location.", "error")
+        return redirect(url_for("home"))
 
     return redirect(url_for("home"))
 
@@ -232,14 +236,12 @@ def edit_item(item_id):
         else:
             location_id = None
 
-        update_item(
-            user_id,
-            item_id,
-            item_name,
-            description,
-            location_id
-        )
+        updated = update_item(user_id, item_id, item_name, description, location_id)
 
+        if not updated:
+            flash("Unable to update item. Please check the storage location.", "error")
+            return redirect(url_for("home"))
+        
         return redirect(url_for("home"))
 
     # Find the item being edited
@@ -473,6 +475,10 @@ def save_item():
         int(location_id),
         photo_path=filename
     )
+
+    if item_id is None:
+        flash("Invalid storage location.", "error")
+        return redirect(url_for("home"))
 
     add_tags(item_id, tags)
 
